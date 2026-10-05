@@ -44,7 +44,18 @@ class Classifier(nn.Module):
                         1 / 0.24279110719788685,
                     ]
                 ).to(args.device)
-
+            elif args.dataset == "meld": # added support for meld. 
+                self.loss_weights = torch.tensor(
+                    [
+						1 / 0.4694,
+						1 / 0.1193,
+						1 / 0.0261,
+						1 / 0.0731,
+						1 / 0.1683,
+						1 / 0.0263,
+						1 / 0.1172,
+        			]
+    			).to(args.device)
             elif args.dataset == "mosei":
                 if args.emotion == "happiness":
                     self.loss_weights = torch.tensor(

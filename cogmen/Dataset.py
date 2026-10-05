@@ -49,7 +49,7 @@ class Dataset:
                 a = torch.tensor(a)
                 v = torch.tensor(v)
                 if self.modalities == "atv":
-                    tmp.append(torch.cat((a, t, v)))
+                    tmp.append(torch.cat((a, t, v))) # COGMEN uses simple concatanation to form the input vector to the model. 
                 elif self.modalities == "at":
                     tmp.append(torch.cat((a, t)))
                 elif self.modalities == "tv":
@@ -64,14 +64,19 @@ class Dataset:
                     tmp.append(v)
 
             tmp = torch.stack(tmp)
+            # print("Hello ", len(s.speaker), speaker_tensor.shape) # Hello  8 torch.Size([32, 23])
+            # print(s.speaker[0])
+			# Hello  36 torch.Size([32, 83]) for iemocap
+   
             input_tensor[i, :cur_len, :] = tmp
             if self.dataset in ["meld", "dailydialog"]:
+            # if self.dataset in ["dais_len] = torch.tensor([s.speaker])
                 speaker_tensor[i, :cur_len] = torch.tensor([s.speaker])
             else:
                 speaker_tensor[i, :cur_len] = torch.tensor(
                     [self.speaker_to_idx[c] for c in s.speaker]
                 )
-
+           
             labels.extend(s.label)
 
         label_tensor = torch.tensor(labels).long()

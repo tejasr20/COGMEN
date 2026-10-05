@@ -25,12 +25,14 @@ class COGMEN(nn.Module):
             "iemocap": {"hap": 0, "sad": 1, "neu": 2, "ang": 3, "exc": 4, "fru": 5},
             "iemocap_4": {"hap": 0, "sad": 1, "neu": 2, "ang": 3},
             "mosei": {"Negative": 0, "Positive": 1},
+            "meld": {'neutral': 0, 'surprise': 1, 'fear': 2, 'sadness': 3, 'joy': 4, 'disgust': 5, 'anger': 6},
         }
 
         dataset_speaker_dict = {
             "iemocap": 2,
             "iemocap_4": 2,
             "mosei": 1,
+            "meld": 9,
         }
 
         if args.dataset and args.emotion == "multilabel":
