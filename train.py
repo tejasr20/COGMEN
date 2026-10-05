@@ -109,7 +109,7 @@ if __name__ == "__main__":
         type=str,
         # required=True,
         default="iemocap_4",
-        choices=["iemocap", "iemocap_4", "mosei"],
+        choices=["iemocap", "iemocap_4", "mosei", "meld"],
         help="Dataset name.",
     )
     ### adding other pre-trained text models
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         help="Type of RNN cell.",
     )
     parser.add_argument(
-        "--class_weight",
+        "--class_weight", 
         action="store_true",
         default=False,
         help="Use class weights in nll loss.",
@@ -283,6 +283,15 @@ if __name__ == "__main__":
             "av": 80 + 35,
             "atv": 80 + 768 + 35,
         },
+         "meld": {
+            "a": 300,
+            "t": 768, # will also go through SBert
+            "v": 342,
+            "at": 300 + 768,
+            "tv": 768 + 342,
+            "av": 642,
+            "atv": 300 + 768 + 342,
+        }
     }
 
     log.debug(args)

@@ -7,16 +7,44 @@ import os
 import json
 import pandas as pd
 import numpy as np
+# import pydub
 
 import cogmen
 
+# def write(f, sr, x, normalized=False):
+#     """numpy array to MP3"""
+#     channels = 2 if (x.ndim == 2 and x.shape[1] == 2) else 1
+#     if normalized:  # normalized array - each item should be a float in [-1, 1)
+#         y = np.int16(x * 2 ** 15)
+#     else:
+#         y = np.int16(x)
+#     song = pydub.AudioSegment(y.tobytes(), frame_rate=sr, sample_width=2, channels=channels)
+#     song.export(f, format="mp3", bitrate="320k")
+
 
 log = cogmen.utils.get_logger()
+# This script appears to be a data preprocessing script for different datasets, including IEMOCAP and MOSEI. Here's a breakdown of what it does:
 
+# 1. **Import Libraries**: The script imports necessary libraries and modules such as `argparse`, `tqdm`, `pickle`, `os`, `json`, `pandas`, `numpy`, and `cogmen`.
+
+# 2. **Define Functions**:
+#    - `get_iemocap()`: This function loads the IEMOCAP dataset features from a pickle file, splits them into train, dev, and test sets, and returns them.
+#    - `get_iemocap_split(split_utterances)`: This function is similar to `get_iemocap()` but splits each dialogue into smaller segments or utterances based on the `split_utterances` parameter.
+#    - `get_mosei_from_tbje(args)`: This function loads the MOSEI dataset features from a pickle file, processes them, and returns train, dev, and test sets.
+#    - `get_mosei_from_tbje_emotion(args)`: This function is similar to `get_mosei_from_tbje(args)` but is specific to extracting emotion-related features.
+#    - `get_mosei()`: This function loads the MOSEI dataset features, splits them into train, dev, and test sets, and returns them.
+   
+# 3. **Main Function**:
+#    - The `main()` function parses command-line arguments using `argparse`, calls the appropriate functions based on the dataset specified, and saves the preprocessed data into pickle files.
+
+# 4. **Script Execution**:
+#    - Finally, the script checks if it's being run directly (`__name__ == "__main__"`) and executes the `main()` function with the provided command-line arguments.
+
+# This script seems well-structured for preprocessing different datasets, allowing flexibility in handling different data formats and processing requirements.
 
 def get_iemocap():
     cogmen.utils.set_seed(args.seed)
-
+    feature_path= "./data/iemocap/IEMOCAP_features.pkl"
     if args.dataset == "iemocap":
         (
             video_ids,
@@ -29,7 +57,7 @@ def get_iemocap():
             trainVids,
             test_vids,
         ) = pickle.load(
-            open("./data/iemocap/IEMOCAP_features.pkl", "rb"), encoding="latin1"
+            open(feature_path, "rb"), encoding="latin1"
         )
     elif args.dataset == "iemocap_4":
         (
@@ -45,12 +73,47 @@ def get_iemocap():
         ) = pickle.load(
             open("./data/iemocap_4/IEMOCAP_features_4.pkl", "rb"), encoding="latin1"
         )
-
+    elif args.dataset == "meld":
+        (
+            video_ids,
+            video_speakers,
+            video_labels,
+            video_text,
+            video_audio,
+            video_visual,
+            video_sentence,
+            trainVids,
+            test_vids,
+            aaa
+        ) = pickle.load(
+            open("./data/MELD/MELD_features_final.pkl", "rb"), encoding="latin1"
+        )
+        trainVids= list(trainVids)
+        test_vids= list(test_vids)
+    print(type(video_sentence), len(video_sentence), video_sentence.keys())
+    # print(len(video_ids), type(video_ids), video_ids.keys())
+    # print(video_ids['Ses02F_impro05'])
+    # print(video_ids['Ses02M_impro05'])
     train, dev, test = [], [], []
     dev_size = int(len(trainVids) * 0.1)
     train_vids, dev_vids = trainVids[dev_size:], trainVids[:dev_size]
-
+    print(len(train_vids), len(test_vids))
+    flag= 1
+    rows= 0
     for vid in tqdm(train_vids, desc="train"):
+        # rows+= len(video_sentence[vid])
+        if(flag==1):
+            print(
+                # replace 51 with length of dialogue. 
+            #     len(video_speakers[vid]), # this is a list of the length 51 ['M', 'F', 'M', 'F', 'M', 'F', 'F', 'M', 'F', 'F', 'F', 'F', 'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'F', 'F', 'M', 'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'M', 'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'M', 'F'] 
+            #     video_labels[vid],  # this is a list of the form [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5, 2, 2, 5, 2, 2, 5, 5, 2, 2, 2, 3, 5, 2, 2, 3, 2, 2, 5, 3, 2, 5, 5, 2, 2, 5, 5, 2, 5, 5, 2, 3, 2, 2, 3, 5, 5, 5, 5]
+            #     video_text[vid], # list of length 51, each element of list is of length 100. 
+            #     type(video_text[vid]), np.array(video_text[vid]).shape,
+            #     np.array(video_audio[vid]).shape, # (51, 100)
+            #      np.array(video_visual[vid]).shape, #  (51, 512)
+            #     video_sentence[vid]
+            )
+            flag=0
         train.append(
             cogmen.Sample(
                 vid,
@@ -62,7 +125,9 @@ def get_iemocap():
                 video_sentence[vid],
             )
         )
+    # print("Train rows are ", rows) : 5146. 
     for vid in tqdm(dev_vids, desc="dev"):
+        rows+= len(video_sentence[vid])
         dev.append(
             cogmen.Sample(
                 vid,
@@ -74,7 +139,23 @@ def get_iemocap():
                 video_sentence[vid],
             )
         )
+    # print("Dev rows are ", rows) : 664
+    test_rows= 0
     for vid in tqdm(test_vids, desc="test"):
+        test_rows+= len(video_sentence[vid])
+        if(flag==0):
+            print(
+                # replace 51 with length of dialogue. 
+                video_ids[vid][0],
+                len(video_speakers[vid]), # this is a list of the length 51 ['M', 'F', 'M', 'F', 'M', 'F', 'F', 'M', 'F', 'F', 'F', 'F', 'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'F', 'F', 'M', 'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'M', 'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'M', 'F'] 
+                # video_labels[vid],  # this is a list of the form [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 5, 2, 2, 5, 2, 2, 5, 5, 2, 2, 2, 3, 5, 2, 2, 3, 2, 2, 5, 3, 2, 5, 5, 2, 2, 5, 5, 2, 5, 5, 2, 3, 2, 2, 3, 5, 5, 5, 5]
+                # video_text[vid], # list of length 51, each element of list is of length 100. 
+                # type(video_text[vid]), np.array(video_text[vid]).shape,
+                # np.array(video_audio[vid]).shape, # (51, 100)
+                #  np.array(video_visual[vid]).shape, #  (51, 512)
+                video_sentence[vid]
+            )
+            flag=1
         test.append(
             cogmen.Sample(
                 vid,
@@ -86,6 +167,9 @@ def get_iemocap():
                 video_sentence[vid],
             )
         )
+    # print("Test rows are ", test_rows): 1623 : diff 538 
+    log.info("unsorted train vids:")
+    log.info((train_vids))
     log.info("train vids:")
     log.info(sorted(train_vids))
     log.info("dev vids:")
@@ -127,7 +211,23 @@ def get_iemocap_split(split_utterances):
         ) = pickle.load(
             open("./data/iemocap_4/IEMOCAP_features_4.pkl", "rb"), encoding="latin1"
         )
-
+    elif args.dataset == "meld":
+        (
+            video_ids,
+            video_speakers,
+            video_labels,
+            video_text,
+            video_audio,
+            video_visual,
+            video_sentence,
+            trainVids,
+            test_vids,
+            aaa
+        ) = pickle.load(
+            open("./data/MELD/MELD_features_final.pkl", "rb"), encoding="latin1"
+        )
+    trainVids= list(trainVids)
+    test_vids= list(test_vids)
     train, dev, test = [], [], []
     dev_size = int(len(trainVids) * 0.1)
     train_vids, dev_vids = trainVids[dev_size:], trainVids[:dev_size]
@@ -200,6 +300,7 @@ def get_mosei_from_tbje(args):
         return res
 
     def cmumosei_2(a):
+        # binary classification problem- I guess we are returning a real valued a which must be converted to binary. 
         if a < 0:
             return 0
         if a >= 0:
@@ -320,7 +421,6 @@ def get_mosei_from_tbje(args):
                 "diag_" + str(dialogue_idx), speakers, labels, text, audio, visual, text
             )
         )
-
     return train, dev, test
 
 
@@ -498,16 +598,106 @@ def get_mosei():
 
     return train, dev, test
 
+def get_mosei_split(split_utterances):
+	
+    mosei_path = args.data_dir
+    cogmen.utils.set_seed(args.seed)
+
+    feature_path = "categorical.p"
+    path = os.path.join(mosei_path, feature_path)
+    (
+        video_ids,
+        video_speakers,
+        video_labels,
+        video_text,
+        video_audio,
+        video_visual,
+        video_sentence,
+        trainVids,
+        test_vids,
+    ) = pickle.load(open(path, "rb"), encoding="latin1")
+
+    label_count = []
+    len_count = []
+    trainVids = np.array(trainVids)
+    test_vids = np.array(test_vids)
+    train, dev, test = [], [], []
+    dev_size = int(len(trainVids) * 0.1)
+    train_vids, dev_vids = trainVids[dev_size:], trainVids[:dev_size]
+
+    for vid in tqdm(train_vids, desc="train"):
+        for split_i in range(len(video_text[vid]) // split_utterances):
+            train.append(
+                cogmen.Sample(
+                    vid,
+                    video_speakers[vid][split_i : split_i + split_utterances],
+                    video_labels[vid][split_i : split_i + split_utterances],
+                    video_text[vid][split_i : split_i + split_utterances],
+                    video_audio[vid][split_i : split_i + split_utterances],
+                    video_visual[vid][split_i : split_i + split_utterances],
+                    video_sentence[vid][split_i : split_i + split_utterances],
+                )
+            )
+    for vid in tqdm(dev_vids, desc="dev"):
+        for split_i in range(len(video_text[vid]) // split_utterances):
+            dev.append(
+                cogmen.Sample(
+                    vid,
+                    video_speakers[vid][split_i : split_i + split_utterances],
+                    video_labels[vid][split_i : split_i + split_utterances],
+                    video_text[vid][split_i : split_i + split_utterances],
+                    video_audio[vid][split_i : split_i + split_utterances],
+                    video_visual[vid][split_i : split_i + split_utterances],
+                    video_sentence[vid][split_i : split_i + split_utterances],
+                )
+            )
+    for vid in tqdm(test_vids, desc="test"):
+        for split_i in range(len(video_text[vid]) // split_utterances):
+            test.append(
+                cogmen.Sample(
+                    vid,
+                    video_speakers[vid][split_i : split_i + split_utterances],
+                    video_labels[vid][split_i : split_i + split_utterances],
+                    video_text[vid][split_i : split_i + split_utterances],
+                    video_audio[vid][split_i : split_i + split_utterances],
+                    video_visual[vid][split_i : split_i + split_utterances],
+                    video_sentence[vid][split_i : split_i + split_utterances],
+                )
+            )
+
+    total = len(label_count)
+    pos = sum(label_count)
+    neg = total - pos
+
+    log.info("train vids:")
+    log.info(sorted(train_vids))
+    log.info("dev vids:")
+    log.info(sorted(dev_vids))
+    log.info("test vids:")
+    log.info(sorted(test_vids))
+
+    return train, dev, test
 
 def main(args):
-    if args.dataset == "iemocap":
+    if args.dataset == "iemocap" and args.split_utterances == -1:
+        print("Not splitting iemocap")
         train, dev, test = get_iemocap()
         data = {"train": train, "dev": dev, "test": test}
-        cogmen.utils.save_pkl(data, "./data/iemocap/data_iemocap.pkl")
+        cogmen.utils.save_pkl(data, "./data/iemocap/data_iemocap_asr.pkl")
     if args.dataset == "iemocap_4" and args.split_utterances == -1:
         train, dev, test = get_iemocap()
         data = {"train": train, "dev": dev, "test": test}
         cogmen.utils.save_pkl(data, "./data/iemocap_4/data_iemocap_4.pkl")
+    if args.dataset == "iemocap" and args.split_utterances != -1:
+        print("Splitting iemocap")
+        train, dev, test = get_iemocap_split(args.split_utterances)
+        data = {"train": train, "dev": dev, "test": test}
+        cogmen.utils.save_pkl(
+            data,
+            "./data/iemocap/data_iemocap_split_"
+            + str(args.split_utterances)
+            + ".pkl",
+        )
     if args.dataset == "iemocap_4" and args.split_utterances != -1:
         train, dev, test = get_iemocap_split(args.split_utterances)
         data = {"train": train, "dev": dev, "test": test}
@@ -517,10 +707,37 @@ def main(args):
             + str(args.split_utterances)
             + ".pkl",
         )
-    if args.dataset == "mosei":
+        print("Saved split dataset")
+    
+    if args.dataset == "meld" and args.split_utterances == -1:
+        print("Not splitting meld")
+        train, dev, test = get_iemocap()
+        data = {"train": train, "dev": dev, "test": test}
+        cogmen.utils.save_pkl(data, "./data/MELD/data_meld.pkl")
+    if args.dataset == "meld" and args.split_utterances != -1:
+        train, dev, test = get_iemocap_split(args.split_utterances)
+        data = {"train": train, "dev": dev, "test": test}
+        cogmen.utils.save_pkl(data,  "./data/MELD/data_meld_split_"
+            + str(args.split_utterances)
+            + ".pkl",
+		)
+        
+    if args.dataset == "mosei" and args.split_utterances == -1:
         train, dev, test = get_mosei()
         data = {"train": train, "dev": dev, "test": test}
         cogmen.utils.save_pkl(data, "./data/mosei/data_mosei.pkl")
+        
+    if args.dataset == "mosei" and args.split_utterances != -1:
+        print("Splitting mosei")
+        train, dev, test = get_mosei_split(args.split_utterances)
+        data = {"train": train, "dev": dev, "test": test}
+        cogmen.utils.save_pkl(
+            data,
+            "./data/mosei/data_mosei_split_"
+            + str(args.split_utterances)
+            + ".pkl",
+        )
+
 
     if args.dataset == "mosei_tbje_2class":
         train, dev, test = get_mosei_from_tbje(args)
@@ -548,12 +765,15 @@ if __name__ == "__main__":
         "--dataset",
         type=str,
         required=True,
-        choices=["iemocap", "iemocap_4", "mosei",],
+        choices=["iemocap", "iemocap_4", "mosei","meld"],
         help="Dataset name.",
     )
     parser.add_argument(
         "--data_dir", type=str, default="./data", help="Dataset directory"
     )
+    # parser.add_argument(
+    #     "--asr", action="store_true", default=False, help="Whether or not to use ASR text instead of transcribed text for iemocap"
+    # )
     parser.add_argument(
         "--use_wave2vec2_audio_features",
         action="store_true",
