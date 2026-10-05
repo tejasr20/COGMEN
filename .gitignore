@@ -130,3 +130,22 @@ dmypy.json
 
 # others
 .DS_Store
+
+# macOS and Python junk
+.DS_Store
+__pycache__/
+*.pyc
+
+# data and artefacts (regenerate with preprocess.py)
+data/**/*.pkl
+data/meld/
+*.pt
+*.pt.zip
+
+# stray copy of JOYFUL package and scratch
+joyful/
+code.ipynb
+# macOS and Python junk
+.DS_Store
+__pycache__/
+*.pyc
